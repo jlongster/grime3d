@@ -55,6 +55,17 @@
 
 
 ;; type keywords
+(define types
+  '(bool
+    size_t
+    int
+    float
+    double
+    short
+    long
+    char
+    void))
+
 (define type-keywords
   '(bool
     size_t
@@ -71,8 +82,8 @@
     star
     struct))
 
-(define (primitive-type-keyword? token)
-  (memq token type-keywords))
+(define (primitive-type? token)
+  (memq token types))
 
 (define (type-keyword? token)
   (or (memq token type-keywords)
@@ -137,6 +148,8 @@
         '(pointer (pointer unsigned-int)))
 (assert (make-type '(struct (id "idgen")))
         '(struct "idgen"))
+(assert (make-type '((id "GLdouble") star))
+        '(pointer GLdouble))
 
 ;; typedefs
 (define (typedef-token? token)
@@ -184,6 +197,29 @@
               (eq? (cadr rest) 'open-paren)))))
 (assert (function-token? '(unsigned int (id "foo") open-paren close-paren)))
 
+(define (strip-argument-name token)
+  (let ((has-primitive-type? (fold (lambda (el r)
+                                     (or (primitive-type? el)
+                                         r))
+                                   #f
+                                   token))
+        (num-ids (fold (lambda (el r)
+                         (if (id-token? el) (+ r 1) r))
+                       0
+                       token)))
+    (if (or (and has-primitive-type?
+                 (= num-ids 1))
+            (> num-ids 1))
+        (reverse (cdr (reverse token)))
+        token)))
+
+(assert (strip-argument-name '(unsigned int)) '(unsigned int))
+(assert (strip-argument-name '(unsigned int (id "arg"))) '(unsigned int))
+(assert (strip-argument-name '(const (id "typeid") star))
+        '(const (id "typeid") star))
+(assert (strip-argument-name '((id "typeid") (id "inst")))
+        '((id "typeid")))
+
 (define (make-function-expr token)
   (receive (ret-type-token token)
       (read-type-keywords (lambda (tok)
@@ -209,22 +245,8 @@
                                                         "(function callbacks are not supported) ")
                                           (parser-error "token: " token)
                                           (loop '() '()))
-                                   (let ((has-keyword? (fold (lambda (el r)
-                                                               (or (primitive-type-keyword? el)
-                                                                   r))
-                                                             #f
-                                                             head))
-                                         (num-ids (fold (lambda (el r)
-                                                          (if (id-token? el) (+ r 1) r))
-                                                        0
-                                                        head)))
-                                     (loop (cons (if (or (and has-keyword?
-                                                              (= num-ids 1))
-                                                         (= num-ids 2))
-                                                     (reverse (cdr (reverse head)))
-                                                     head)
-                                                 acc)
-                                           tail))))))))
+                                   (loop (cons (strip-argument-name head) acc)
+                                         tail)))))))
       (if (not (null? type-tokens))
           (let ((ret-type (make-type ret-type-token))
                 (id (make-id id-token))
@@ -245,7 +267,9 @@
         '(define foo (c-lambda ((pointer idgen) unsigned-int) unsigned-int "foo")))
 
 ;; entry
-(define (analyze input-port output-port)
+(define (analyze #!optional
+                 (input-port (current-input-port))
+                 (output-port (current-output-port)))
   (define (maybe-write-expr expr)
     (if expr
         (begin

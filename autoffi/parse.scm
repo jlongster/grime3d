@@ -1,5 +1,7 @@
 
-(define (parse input-port output-port)
+(define (parse #!optional
+               (input-port (current-input-port))
+               (output-port (current-output-port)))
   (define (writer node)
     (write node output-port)
     (newline output-port))

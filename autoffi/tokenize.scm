@@ -8,7 +8,9 @@
   (newline)
   (exit 1))
 
-(define (tokenize input-port output-port)
+(define (tokenize #!optional
+               (input-port (current-input-port))
+               (output-port (current-output-port)))
   (lexer-init 'port input-port)
   (let loop ()
     (let ((tok (lexer)))
