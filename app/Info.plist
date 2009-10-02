@@ -24,5 +24,7 @@
 	<string>main</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+    <key>NSUIElement</key>
+    <integer>1</integer>
 </dict>
 </plist>
