@@ -118,37 +118,6 @@
        (grime3d-send-close proc)
        (kill-buffer buf)))))
 
-;;; Catch all of the events that could bury a grime3d buffer. There
-;;; might be a better way to do this. Unfortunately, Emacs doesn't
-;;; provide canonical hooks for when buffers are shown or hidden.
-
-;; (defadvice bury-buffer (before
-;;                         grime3d-bury-buffer)
-;;   (grime3d-send-hide (current-buffer)))
-
-;; (defadvice switch-to-buffer (before
-;;                              grime3d-switch-to-buffer-before)
-;;   (grime3d-send-hide (current-buffer)))
-
-;; ;; (defadvice switch-to-buffer (after
-;; ;;                              grime3d-switch-to-buffer-after)
-;; ;;   (grime3d-send-show (current-buffer)))
-
-;; (defun grime3d-enable-advices ()
-;;   (ad-activate 'bury-buffer)
-;;   (ad-activate 'switch-to-buffer))
-
-;; (defun grime3d-disable-advices ()
-;;   (ad-deactivate 'bury-buffer)
-;;   (ad-deactivate 'switch-to-buffer))
-
-;;; Communication with clients
-
-;; (defun grime3d-send-show (buffer)
-;;   (let ((proc (get-buffer-process buffer)))
-;;     (if proc
-;;         (process-send-string proc "show\n"))))
-
 (defun grime3d-send-close (buffer-or-process)
   (let ((proc (if (processp buffer-or-process)
                   buffer-or-process
